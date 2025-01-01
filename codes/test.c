@@ -5,12 +5,16 @@
 //#include "structs&functions.h"
 
 typedef struct {
-
     char username[50];
     char password[50];
     char email[100];
-
+    int total_points;
+    int total_gold;
+    int rank;
+    int games_completed;
+    int days_since_first_game;
 } User;
+
 
 int at_least_7(char *username) {
 
@@ -150,8 +154,85 @@ int check_users(char *username, char *password) {
 }
 
 void forgot_your_password() {
+
     clear();
-    mvprintw(LINES / 2, COLS / 2, "forgot your password page");
+    FILE *file = fopen("users.txt", "r");
+    User user;
+    keypad(stdscr, TRUE);
+    cbreak();
+    curs_set(FALSE);
+
+    char username[50];
+    char email[100];
+
+    const char *forgotclicks[] = {
+        "Enter your username:",
+        "Enter your e-mail:",
+        "Show password",
+        "Back"
+    };
+
+    int choice = 0;
+
+    while (1) {
+        for (int i = 0; i < 4; i++) {
+            if (i == choice) {
+                attron(A_REVERSE);
+            }
+            mvprintw(LINES / 2 - 4 + (2 * i), COLS / 2 - 27, "%s", forgotclicks[i]);
+            if (i == choice) {
+                attron(A_REVERSE);
+            }
+        }
+        refresh();
+
+        int ch = getch();
+        if (ch == KEY_UP) {
+            if (choice == 0) {
+                choice = 3;
+            }
+            else {
+                choice--;
+            }
+        }
+        else if (ch == KEY_DOWN) {
+            if (choice == 3) {
+                choice = 0;
+            }
+            else {
+                choice++;
+            }
+        }
+        else if (ch == '\n') {
+            switch (choice) {
+                case 0:
+                    echo();
+                    move(LINES / 2 - 4, COLS / 2 - 8);
+                    getnstr(username, 50);
+                    noecho();
+                    break;
+                case 1:
+                    echo();
+                    move(LINES / 2 - 2, COLS / 2 - 9);
+                    getnstr(email, 100);
+                    noecho();
+                    break;
+                case 2:
+                    while (fscanf(file, "%s %s %s", user.username, user.password, user.email) != EOF) {
+                        if (strcmp(username, user.username) == 0 && strcmp(email, user.email) == 0) {
+                            mvprintw(LINES / 2, COLS / 2 - 14, "Your password is %s", user.password); 
+                            break;
+                        }
+                    }
+                    fclose(file);
+                    break;
+                case 3:
+                    sign_in_page();
+                    break;
+            }
+        }
+    }
+
 }
 
 void enter_as_guest() {
@@ -304,13 +385,14 @@ void sign_up_page() {
         "Your e-mail:",
         "Your password:",
         "Random password",
-        "Done"
+        "Done",
+        "Back"
     };
 
     int choice = 0;
 
     while (1) {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             if (i == choice) {
                 attron(A_REVERSE);
             }
@@ -324,14 +406,14 @@ void sign_up_page() {
         int ch = getch();
         if (ch == KEY_UP) {
             if (choice == 0) {
-                choice = 4;
+                choice = 5;
             }
             else {
                 choice--;
             }
         } 
         else if (ch == KEY_DOWN) {
-            if (choice == 4) {
+            if (choice == 5) {
                 choice = 0;
             }
             else {
@@ -404,6 +486,9 @@ void sign_up_page() {
                         sign_up_page();
                     }
                     break;
+                case 5:
+                    sign_in_and_sign_up();
+                    break;
             }
         }
     }
@@ -445,7 +530,6 @@ void sign_up_page() {
 
 void sign_in_and_sign_up() {
 
-    clear();
     clear();
     curs_set(FALSE);
     keypad(stdscr, TRUE);
@@ -693,8 +777,12 @@ void profile() {
     mvprintw(LINES / 8, COLS / 2 - 10, "Profile");
     mvprintw(LINES / 4, COLS / 2 - 10, "Username: %s", current_user.username);
     mvprintw(LINES / 4 + 1, COLS / 2 - 10, "Email: %s", current_user.email);
-    getch();
-    setting();
+    mvprintw(LINES - 1, COLS / 2 - 10, "Press ESC to return.");
+    int ch = getch();
+    if (ch == 27) {
+        pre_game_menu();
+    }
+    //getch();
 
 }
 
